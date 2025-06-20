@@ -12,7 +12,7 @@ export const createPurchase = async (req, res) => {
             quantity,
             purchasedBy: req.user._id
         });
-        console.log("✅ Purchase controller entered"); // 👈 Add this at the top
+        console.log("Purchase controller entered");
 
         await newPurchase.save();
 
