@@ -76,6 +76,45 @@ export const getDashboardMetrics = async (req, res) => {
     }
 }
 
+export const getDashboardOverview = async (req, res) => {
+    try {
+        const totalPurchases = await Purchase.aggregate([
+            { $group: { _id: null, total: { $sum: "$quantity" } } }
+        ]);
+
+        const totalTransfers = await Transfer.aggregate([
+            { $group: { _id: null, total: { $sum: "$quantity" } } }
+        ]);
+
+        const assigned = await Assignment.aggregate([
+            { $match: { status: "assigned" } },
+            { $group: { _id: null, total: { $sum: "$quantity" } } }
+        ]);
+
+        const expended = await Assignment.aggregate([
+            { $match: { status: "expended" } },
+            { $group: { _id: null, total: { $sum: "$quantity" } } }
+        ]);
+
+        const totalPurchasesQty = totalPurchases[0]?.total || 0;
+        const totalTransfersQty = totalTransfers[0]?.total || 0;
+        const totalAssignedQty = assigned[0]?.total || 0;
+        const totalExpendedQty = expended[0]?.total || 0;
+
+        const totalAssets = totalPurchasesQty + totalTransfersQty;
+
+        res.status(200).json({
+            totalAssets,
+            totalPurchases: totalPurchasesQty,
+            totalTransfers: totalTransfersQty,
+            totalAssignments: totalAssignedQty + totalExpendedQty,
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Dashboard stats fetch failed", error: error.message });
+    }
+};
+
+
 export const getDashboardSummary = async (req, res) => {
     try {
         // Total purchases
